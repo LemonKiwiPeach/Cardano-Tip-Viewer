@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cardano Tip Viewer</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+  .card { max-width: 640px; padding: 1rem 1.25rem; border: 1px solid #ddd; border-radius: 12px; }
+  .row { display: flex; justify-content: space-between; padding: .45rem 0; border-bottom: 1px dashed #eee; }
+  .row:last-child { border-bottom: none; }
+  small { color: #666; }
+  button { padding: .6rem 1rem; border-radius: 10px; border: 1px solid #ccc; cursor: pointer; }
+</style>
+
+<div class="card">
+  <h2>Latest Cardano Tip</h2>
+  <div id="status"><small>Loading...</small></div>
+  <div id="tip"></div>
+  <p><button id="refresh">Refresh</button></p>
+  <small>Powered by <a href="https://koios.rest/guide/" target="_blank" rel="noreferrer">Koios</a></small>
+</div>
+
+<script>
+const API = "https://api.koios.rest/api/v1/tip"; // Mainnet
+async function loadTip() {
+  const s = document.getElementById('status');
+  const t = document.getElementById('tip');
+  s.textContent = 'Fetching...';
+  t.innerHTML = '';
+  try {
+    const res = await fetch(API, { headers: { accept: "application/json" } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const [{ block_no, epoch_no, abs_slot, epoch_slot, block_time, hash }] = data;
+    const time = new Date(block_time * 1000).toLocaleString();
+    t.innerHTML = `
+      <div class="row"><strong>Block</strong><span>${block_no ?? '—'}</span></div>
+      <div class="row"><strong>Epoch</strong><span>${epoch_no}</span></div>
+      <div class="row"><strong>Abs Slot</strong><span>${abs_slot}</span></div>
+      <div class="row"><strong>Epoch Slot</strong><span>${epoch_slot}</span></div>
+      <div class="row"><strong>Time</strong><span>${time}</span></div>
+      <div class="row"><strong>Hash</strong><span style="word-break: break-all">${hash}</span></div>
+    `;
+    s.textContent = 'OK';
+  } catch (e) {
+    s.innerHTML = `<span style="color:#c00">Error: ${e.message}</span>`;
+  }
+}
+document.getElementById('refresh').addEventListener('click', loadTip);
+loadTip();
+</script>
+</html>
